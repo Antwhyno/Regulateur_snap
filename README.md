@@ -12,6 +12,6 @@ SpotlightBlocker/
 │   │       │   └── SpotlightBlockerService.kt  <-- Le cerveau (Détecteur & Bloqueur)
 │   │       └── res/
 │   │           ├── layout/
-│   │           │   └── activity_main.xml       <-- Le design de ton écran d'accueil
+│   │           │   └── activity_main.xml       <-- Le design de ton écran d'accueil  pas trouvé sur gem
 │   │           └── xml/
 │   │               └── accessibility_config.xml <-- Le filtre réseau/système (Cible Snapchat)
