@@ -10,58 +10,64 @@ class SpotlightBlockerService : AccessibilityService() {
     override fun onAccessibilityEvent(event: AccessibilityEvent) {
         val rootNode = rootInActiveWindow ?: return
 
-        // 🛡️ SÉCURITÉ FINALE : Si la caméra est ACTUELLEMENT VISIBLE par l'utilisateur, on ne fait rien.
-        // Grâce à "isVisibleToUser", on ignore les boutons de la caméra cachés en arrière-plan !
-        if (isCameraActivelyVisible(rootNode)) {
+        // 1. BLOCAGE DIRECT DE SPOTLIGHT
+        // Si le grand titre "Spotlight" non-cliquable est visible en haut, on éjecte direct.
+        if (isSpotlightTitleVisible(rootNode)) {
+            Toast.makeText(applicationContext, "Spotlight bloqué ! Retour au travail ❌", Toast.LENGTH_SHORT).show()
+            performGlobalAction(GLOBAL_ACTION_BACK)
             return
         }
 
-        // 🎯 CIBLAGE CHIRURGICAL : On vérifie si l'onglet Spotlight est détecté ou cliqué
-        if (isSpotlightTargeted(rootNode, event)) {
-            Toast.makeText(applicationContext, "Spotlight bloqué ! Retour au travail 🚀", Toast.LENGTH_SHORT).show()
-            performGlobalAction(GLOBAL_ACTION_BACK)
+        // 2. BLOCAGE DU SCROLL DANS LES STORIES (DOOM-SCROLLING)
+        // On écoute uniquement l'événement de défilement (TYPE_VIEW_SCROLLED)
+        if (event.eventType == AccessibilityEvent.TYPE_VIEW_SCROLLED) {
+            // Si l'utilisateur est sur l'onglet Stories/Découvrir et qu'il essaie de descendre
+            if (isStoriesScreenActive(rootNode)) {
+                Toast.makeText(applicationContext, "Pas de scroll dans les Stories ! 🛑", Toast.LENGTH_SHORT).show()
+                // On le renvoie instantanément à l'écran précédent (l'appareil photo)
+                performGlobalAction(GLOBAL_ACTION_BACK)
+            }
         }
     }
 
-    // Parcourt l'écran pour voir si les éléments exclusifs de l'appareil photo sont affichés à l'utilisateur
-    private fun isCameraActivelyVisible(node: AccessibilityNodeInfo?): Boolean {
+    // Détecte si le vrai écran Spotlight est actif (en cherchant le titre textuel en haut)
+    private fun isSpotlightTitleVisible(node: AccessibilityNodeInfo?): Boolean {
         if (node == null) return false
 
         if (node.isVisibleToUser) {
             val text = node.text?.toString() ?: ""
-            if (text.contains("Flash") || text.contains("Sons") || text.contains("Mode HD") || text.contains("selfies")) {
-                return true // La caméra est réellement sous les yeux de l'utilisateur
+            val desc = node.contentDescription?.toString() ?: ""
+            
+            // Le titre "Spotlight" en haut de l'écran n'est pas cliquable (contrairement au bouton du bas)
+            if ((text.equals("Spotlight", ignoreCase = true) || desc.equals("Spotlight", ignoreCase = true)) && !node.isClickable) {
+                return true
             }
         }
 
         for (i in 0 until node.childCount) {
-            if (isCameraActivelyVisible(node.getChild(i))) {
+            if (isSpotlightTitleVisible(node.getChild(i))) {
                 return true
             }
         }
         return false
     }
 
-    // Détecte si l'onglet Spotlight est sélectionné ou s'il vient de subir un clic
-    private fun isSpotlightTargeted(node: AccessibilityNodeInfo?, event: AccessibilityEvent): Boolean {
+    // Détecte si l'utilisateur regarde actuellement l'onglet Stories / Découvrir
+    private fun isStoriesScreenActive(node: AccessibilityNodeInfo?): Boolean {
         if (node == null) return false
 
-        val text = node.text?.toString()?.lowercase() ?: ""
-        val description = node.contentDescription?.toString()?.lowercase() ?: ""
-
-        if (text.contains("spotlight") || description.contains("spotlight")) {
-            // Détection par clic direct sur l'onglet
-            if (event.eventType == AccessibilityEvent.TYPE_VIEW_CLICKED) {
-                return true
-            }
-            // Détection si l'élément (ou sa boîte parente) est marqué comme sélectionné
-            if (node.isSelected || (node.parent?.isSelected == true)) {
+        if (node.isVisibleToUser) {
+            val text = node.text?.toString() ?: ""
+            // On cible les mots-clés uniques de cet écran vus sur ta vidéo
+            if (text.contains("Stories", ignoreCase = true) || 
+                text.contains("Découvrir", ignoreCase = true) || 
+                text.contains("Comptes suivis", ignoreCase = true)) {
                 return true
             }
         }
 
         for (i in 0 until node.childCount) {
-            if (isSpotlightTargeted(node.getChild(i), event)) {
+            if (isStoriesScreenActive(node.getChild(i))) {
                 return true
             }
         }
