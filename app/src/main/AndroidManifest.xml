@@ -3,6 +3,7 @@
     package="com.anti_scroll.blocker">
 
     <application
+        android:icon="@mipmap/ic_launcher"
         android:label="Régulateur Snap"
         android:allowBackup="true"
         android:supportsRtl="true">
