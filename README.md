@@ -2,6 +2,8 @@
 Avec Gemini boosted
 systeme exploitation: Androide One UI
 
+J'ai mis 1h30 le 1er jour et 5h10 le lendemain (toute l'aprem)
+
 Apres choix du langage kotlin:
 
 SpotlightBlocker/
