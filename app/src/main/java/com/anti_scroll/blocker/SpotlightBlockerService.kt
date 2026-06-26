@@ -16,6 +16,7 @@ class SpotlightBlockerService : AccessibilityService() {
         
         if (!nodes.isNullOrEmpty()) {
             // 3. Alerte ! Tu as ouvert le Spotlight. 
+            android.widget.Toast.makeText(applicationContext, "Va jouer au volley avec lulu ou creer un moteur d'avion", android.widget.Toast.LENGTH_SHORT).show()
             // On simule un appui sur le bouton "Retour" du téléphone pour fermer la page
             performGlobalAction(GLOBAL_ACTION_BACK)
             
