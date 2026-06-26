@@ -27,6 +27,16 @@
         android:textColor="#f5d19a"
         android:layout_marginBottom="20dp" />
 
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Ne perd pas ton temps sur les réseaux
+Travail pour devenir ingénieur"
+        android:textSize="18sp"
+        android:textAlignment="center"
+        android:textColor="#3e5c76"
+        android:layout_marginBottom="20dp" />
+
     <!-- Le texte qui va changer de message selon l'état -->
     <TextView
         android:id="@+id/txt_statut"
