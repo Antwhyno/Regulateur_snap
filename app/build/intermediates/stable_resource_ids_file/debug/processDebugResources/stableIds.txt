@@ -1,0 +1,5 @@
+com.anti_scroll.blocker:xml/accessibility_config = 0x7f030000
+com.anti_scroll.blocker:layout/activity_main = 0x7f020000
+com.anti_scroll.blocker:id/txt_titre = 0x7f010002
+com.anti_scroll.blocker:id/txt_description = 0x7f010001
+com.anti_scroll.blocker:id/btn_activer_bloqueur = 0x7f010000
