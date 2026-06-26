@@ -3,12 +3,15 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:gravity="center"
-    android:padding="20dp"
+    android:gravity="center_horizontal"
+    android:paddingTop="40dp"
+    android:paddingStart="20dp"
+    android:paddingEnd="20dp"
+    android:paddingBottom="20dp"
     android:background="#0d1321">
 
     <TextView
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="Régulateur Snap"
         android:textSize="24sp"
@@ -44,7 +47,7 @@ Travail pour devenir ingénieur"
         android:layout_height="wrap_content"
         android:textSize="18sp"
         android:textAlignment="center"
-        android:textColor="#e63232"
+        android:textColor="#eb5959"
         android:layout_marginBottom="20dp"
         android:text="Le régulateur est désactivé." />
 

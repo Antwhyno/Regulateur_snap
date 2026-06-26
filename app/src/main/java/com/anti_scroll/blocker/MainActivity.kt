@@ -16,6 +16,8 @@ class MainActivity : Activity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        // 🛡️ Masque la barre d'application système par défaut
+        actionBar?.hide()
         setContentView(R.layout.activity_main)
 
         // Liaison avec les éléments du fichier XML
