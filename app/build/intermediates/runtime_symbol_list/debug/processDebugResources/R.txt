@@ -1,0 +1,5 @@
+int id btn_activer_bloqueur 0x7f010000
+int id txt_description 0x7f010001
+int id txt_titre 0x7f010002
+int layout activity_main 0x7f020000
+int xml accessibility_config 0x7f030000
