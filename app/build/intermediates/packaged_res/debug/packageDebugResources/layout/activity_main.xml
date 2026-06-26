@@ -4,7 +4,8 @@
     android:layout_height="match_parent"
     android:orientation="vertical"
     android:gravity="center"
-    android:padding="20dp">
+    android:padding="20dp"
+    android:background="#0d1321">
 
     <TextView
         android:layout_width="wrap_content"
@@ -13,6 +14,7 @@
         android:textSize="24sp"
         android:textStyle="bold"
         android:textAlignment="center"
+        android:textColor="#f5a851"
         android:fontFamily="@font/boldonse_regular"
         android:layout_marginBottom="4dp" />
 
@@ -22,6 +24,17 @@
         android:text="Made by Antoine"
         android:textSize="14sp"
         android:textAlignment="center"
+        android:textColor="#f5d19a"
+        android:layout_marginBottom="20dp" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Ne perd pas ton temps sur les réseaux
+Travail pour devenir ingénieur"
+        android:textSize="18sp"
+        android:textAlignment="center"
+        android:textColor="#3e5c76"
         android:layout_marginBottom="20dp" />
 
     <!-- Le texte qui va changer de message selon l'état -->
@@ -31,6 +44,7 @@
         android:layout_height="wrap_content"
         android:textSize="18sp"
         android:textAlignment="center"
+        android:textColor="#e63232"
         android:layout_marginBottom="20dp"
         android:text="Le régulateur est désactivé." />
 
@@ -40,7 +54,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Configurer le Régulateur"
-        android:backgroundTint="#FFFC00"
-        android:textColor="#000000" />
+        android:backgroundTint="#3e5c76"
+        android:textColor="#96d0e7" />
 
 </LinearLayout>
