@@ -1,3 +1,5 @@
+**Application qui bloque l'accès aux spotlights**
+Avec Gemini boosted
 systeme exploitation: Androide One UI
 
 Apres choix du langage kotlin:
@@ -15,3 +17,13 @@ SpotlightBlocker/
 │   │           │   └── activity_main.xml       <-- Le design de ton écran d'accueil  pas trouvé sur gem
 │   │           └── xml/
 │   │               └── accessibility_config.xml <-- Le filtre réseau/système (Cible Snapchat)
+
+
+**Position de l'APK**
+Reg_Snap/
+└── app/
+    └── build/
+        └── outputs/
+            └── apk/
+                └── debug/
+                    └── app-debug.apk  <-- C'est ton appli !

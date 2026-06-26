@@ -1,2 +1,0 @@
-C:\Users\elisa\NSI_Dev\Reg_Snap\app\src\main\java\com\anti_scroll\blocker\MainActivity.kt
-C:\Users\elisa\NSI_Dev\Reg_Snap\app\src\main\java\com\anti_scroll\blocker\SpotlightBlockerService.kt
