@@ -4,4 +4,7 @@ font boldonse_regular
 id btn_activer_bloqueur
 id txt_statut
 layout activity_main
+mipmap ic_launcher
+mipmap ic_launcher_adaptive_back
+mipmap ic_launcher_adaptive_fore
 xml accessibility_config

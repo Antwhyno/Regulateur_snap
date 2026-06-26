@@ -2,4 +2,7 @@ int font boldonse_regular 0x7f010000
 int id btn_activer_bloqueur 0x7f020000
 int id txt_statut 0x7f020001
 int layout activity_main 0x7f030000
-int xml accessibility_config 0x7f040000
+int mipmap ic_launcher 0x7f040000
+int mipmap ic_launcher_adaptive_back 0x7f040001
+int mipmap ic_launcher_adaptive_fore 0x7f040002
+int xml accessibility_config 0x7f050000
