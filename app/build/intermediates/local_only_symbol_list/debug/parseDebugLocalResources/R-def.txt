@@ -1,7 +1,7 @@
 R_DEF: Internal format may change without notice
 local
+font boldonse_regular
 id btn_activer_bloqueur
-id txt_description
-id txt_titre
+id txt_statut
 layout activity_main
 xml accessibility_config
