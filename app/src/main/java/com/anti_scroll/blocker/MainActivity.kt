@@ -38,16 +38,15 @@ class MainActivity : Activity() {
         if (isAccessibilityServiceEnabled(this, SpotlightBlockerService::class.java)) {
             
             // 🛡️ MODE SÉCURISÉ : Le bloqueur tourne en arrière-plan
-            // On masque complètement le bouton (GONE = invisible et ne prend pas de place)
             btnActiver.visibility = View.GONE
-            
-            // On affiche un message d'encouragement fixe
-            txtStatut.text = "Régulateur actif. Bon travail ! 🚀\nLaisse ton téléphone de côté et concentre-toi."
+            txtStatut.text = "Régulateur actif.\nStay Focused ! "
+            txtStatut.setTextColor(0xFF4CAF50.toInt()) // vert
             
         } else {
             // MODE REPOS : Le bloqueur est éteint, on affiche le bouton pour pouvoir le configurer
             btnActiver.visibility = View.VISIBLE
             txtStatut.text = "Le régulateur est actuellement désactivé."
+            txtStatut.setTextColor(0xFFEB5959.toInt()) // rouge
         }
     }
 
