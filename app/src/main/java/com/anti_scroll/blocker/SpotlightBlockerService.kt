@@ -10,18 +10,22 @@ class SpotlightBlockerService : AccessibilityService() {
 
     override fun onAccessibilityEvent(event: AccessibilityEvent) {
         val rootNode = rootInActiveWindow ?: return
-        
-        // On récupère la hauteur totale de l'écran de ton S24 en pixels
+
+        // 🛡️ SÉCURITÉ PHOTO : Si le bouton "Envoyer à" est à l'écran, on ne bloque RIEN
+        if (isPhotoPreviewActive(rootNode)) {
+            return
+        }
+
         val screenHeight = resources.displayMetrics.heightPixels
 
-        // 1. BLOCAGE DE SPOTLIGHT (Par positionnement géométrique)
+        // 1. BLOCAGE DE SPOTLIGHT
         if (isSpotlightTopTitleVisible(rootNode, screenHeight)) {
             Toast.makeText(applicationContext, "Spotlight bloqué ! Retour au travail ❌", Toast.LENGTH_SHORT).show()
             performGlobalAction(GLOBAL_ACTION_BACK)
             return
         }
 
-        // 2. BLOCAGE DU SCROLL DANS LES STORIES (Qui fonctionne déjà !)
+        // 2. BLOCAGE DU SCROLL DANS LES STORIES
         if (event.eventType == AccessibilityEvent.TYPE_VIEW_SCROLLED) {
             if (isStoriesScreenActive(rootNode)) {
                 Toast.makeText(applicationContext, "Pas de scroll dans les Stories ! 🛑", Toast.LENGTH_SHORT).show()
@@ -30,7 +34,26 @@ class SpotlightBlockerService : AccessibilityService() {
         }
     }
 
-    // Fonction géométrique pour détecter le vrai écran Spotlight
+    // Détecte si l'utilisateur vient de prendre une photo et se trouve sur l'écran d'envoi
+    private fun isPhotoPreviewActive(node: AccessibilityNodeInfo?): Boolean {
+        if (node == null) return false
+
+        if (node.isVisibleToUser) {
+            val text = node.text?.toString() ?: ""
+            // Le bouton "Envoyer à" n'apparaît que sur l'écran d'édition de la photo
+            if (text.contains("Envoyer à", ignoreCase = true) || text.contains("Send To", ignoreCase = true)) {
+                return true
+            }
+        }
+
+        for (i in 0 until node.childCount) {
+            if (isPhotoPreviewActive(node.getChild(i))) {
+                return true
+            }
+        }
+        return false
+    }
+
     private fun isSpotlightTopTitleVisible(node: AccessibilityNodeInfo?, screenHeight: Int): Boolean {
         if (node == null) return false
 
@@ -38,13 +61,9 @@ class SpotlightBlockerService : AccessibilityService() {
             val text = node.text?.toString()?.lowercase() ?: ""
             val desc = node.contentDescription?.toString()?.lowercase() ?: ""
 
-            // Si l'élément contient le mot "spotlight"
             if (text.contains("spotlight") || desc.contains("spotlight")) {
                 val rect = Rect()
                 node.getBoundsInScreen(rect)
-                
-                // Si le haut de l'élément (rect.top) est dans la moitié supérieure de l'écran,
-                // c'est le titre ou le contenu de l'onglet Spotlight, donc on bloque !
                 if (rect.top < screenHeight / 2) {
                     return true
                 }
@@ -59,15 +78,13 @@ class SpotlightBlockerService : AccessibilityService() {
         return false
     }
 
-    // Détection de l'onglet Stories (Inchangé car il fonctionne super bien)
     private fun isStoriesScreenActive(node: AccessibilityNodeInfo?): Boolean {
         if (node == null) return false
 
         if (node.isVisibleToUser) {
             val text = node.text?.toString() ?: ""
-            if (text.contains("Stories", ignoreCase = true) || 
-                text.contains("Découvrir", ignoreCase = true) || 
-                text.contains("Comptes suivis", ignoreCase = true)) {
+            // On cible l'onglet Stories uniquement via ses titres de sections réels
+            if (text.contains("Découvrir", ignoreCase = true) || text.contains("Comptes suivis", ignoreCase = true)) {
                 return true
             }
         }

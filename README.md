@@ -1,5 +1,6 @@
 **Application qui bloque l'accès aux spotlights**
 Avec Gemini boosted
+Pour Samsung S24 FE
 systeme exploitation: Androide One UI
 
 J'ai mis 1h30 le 1er jour et 5h10 le lendemain (toute l'aprem)
@@ -29,3 +30,5 @@ Reg_Snap/
             └── apk/
                 └── debug/
                     └── app-debug.apk  <-- C'est ton appli !
+
+Il faut faire attention a bien autorise l'installation des app depuis cable et tout autoriser a cette app.
