@@ -27,7 +27,7 @@ class SpotlightBlockerService : AccessibilityService() {
         if (event.packageName?.toString() != SNAP_PACKAGE) return
 
         val root = rootInActiveWindow ?: return
-
+        Log.d("SNAPDUMP", "event type=${event.eventType}")
         if (DEBUG_DUMP) {
             val t = System.currentTimeMillis()
             val isTabChange = event.eventType == AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED ||
