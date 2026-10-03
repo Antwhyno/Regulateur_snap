@@ -17,7 +17,7 @@ class SpotlightBlockerService : AccessibilityService() {
 
         // Passe à true pour relever les IDs/descriptions dans Logcat (filtre SNAPDUMP),
         // puis remets à false une fois detectCurrentTab() complété.
-        private const val DEBUG_DUMP = true
+        private const val DEBUG_DUMP = false
     }
 
     private var lastBlock = 0L
@@ -43,8 +43,9 @@ class SpotlightBlockerService : AccessibilityService() {
 
         // 1. BLOCAGE DE SPOTLIGHT
         val onSpotlight = if (tab == SnapTab.UNKNOWN) {
-            // Fallback tant que les signatures d'onglets ne sont pas complétées
-            isSpotlightTopTitleVisible(root, screenHeight)
+            // Fallback tant que les signatures d'onglets ne sont pas complétées.
+            // Uniquement sur un écran principal (barre du bas présente), jamais dans une conversation.
+            isMainScreen(root) && isSpotlightTopTitleVisible(root, screenHeight)
         } else {
             tab == SnapTab.SPOTLIGHT
         }
@@ -56,7 +57,7 @@ class SpotlightBlockerService : AccessibilityService() {
         // 2. BLOCAGE DU SCROLL DANS LES STORIES
         if (event.eventType == AccessibilityEvent.TYPE_VIEW_SCROLLED) {
             val onStories = if (tab == SnapTab.UNKNOWN) {
-                isStoriesScreenActive(root)
+                isMainScreen(root) && isStoriesScreenActive(root)
             } else {
                 tab == SnapTab.STORIES
             }
@@ -106,28 +107,41 @@ class SpotlightBlockerService : AccessibilityService() {
     }
 
     // ---------------------------------------------------------------
+    // ÉCRAN PRINCIPAL = la barre de navigation du bas est affichée
+    // (absente dans une conversation, un snap ouvert, etc.)
+    // ---------------------------------------------------------------
+
+    private fun isMainScreen(node: AccessibilityNodeInfo?): Boolean {
+        if (node == null) return false
+
+        if (node.viewIdResourceName == "com.snapchat.android:id/ngs_camera_icon_container" &&
+            node.isVisibleToUser
+        ) {
+            return true
+        }
+
+        for (i in 0 until node.childCount) {
+            if (isMainScreen(node.getChild(i))) return true
+        }
+        return false
+    }
+
+    // ---------------------------------------------------------------
     // OUTIL DE DUMP (debug)
     // ---------------------------------------------------------------
 
     private fun dumpTree(node: AccessibilityNodeInfo?, depth: Int = 0) {
-    if (node == null) return
-    val r = Rect().also { node.getBoundsInScreen(it) }
-    val screenHeight = resources.displayMetrics.heightPixels
-    val inTopZone = r.top < screenHeight * 0.12
-    val inBottomZone = r.top > screenHeight * 0.85
-
-    if (inTopZone || inBottomZone) {
+        if (node == null) return
+        val r = Rect().also { node.getBoundsInScreen(it) }
         Log.d(
             "SNAPDUMP",
             "${"  ".repeat(depth)}${node.className} " +
                 "id=${node.viewIdResourceName} text=${node.text} " +
                 "desc=${node.contentDescription} sel=${node.isSelected} " +
-                "chk=${node.isChecked} state=${node.stateDescription} " +
                 "vis=${node.isVisibleToUser} bounds=$r"
         )
+        for (i in 0 until node.childCount) dumpTree(node.getChild(i), depth + 1)
     }
-    for (i in 0 until node.childCount) dumpTree(node.getChild(i), depth + 1)
-}
 
     // ---------------------------------------------------------------
     // DÉTECTIONS PAR TEXTE (sécurité photo + fallback)
@@ -153,10 +167,11 @@ class SpotlightBlockerService : AccessibilityService() {
         if (node == null) return false
 
         if (node.isVisibleToUser) {
-            val text = node.text?.toString()?.lowercase() ?: ""
-            val desc = node.contentDescription?.toString()?.lowercase() ?: ""
+            val text = node.text?.toString()?.trim()?.lowercase() ?: ""
+            val desc = node.contentDescription?.toString()?.trim()?.lowercase() ?: ""
 
-            if (text.contains("spotlight") || desc.contains("spotlight")) {
+            // Correspondance EXACTE : un message contenant le mot "spotlight" ne déclenche plus rien
+            if (text == "spotlight" || desc == "spotlight") {
                 val rect = Rect()
                 node.getBoundsInScreen(rect)
                 if (rect.top < screenHeight / 2) return true
