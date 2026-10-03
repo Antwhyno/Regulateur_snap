@@ -27,7 +27,7 @@ class SpotlightBlockerService : AccessibilityService() {
         if (event.packageName?.toString() != SNAP_PACKAGE) return
 
         val root = rootInActiveWindow ?: return
-        Log.d("SNAPDUMP", "event type=${event.eventType}")
+
         if (DEBUG_DUMP) {
             val t = System.currentTimeMillis()
             val isTabChange = event.eventType == AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED ||
@@ -140,14 +140,17 @@ class SpotlightBlockerService : AccessibilityService() {
 
     private fun dumpTree(node: AccessibilityNodeInfo?, depth: Int = 0) {
         if (node == null) return
-        val r = Rect().also { node.getBoundsInScreen(it) }
-        Log.d(
-            "SNAPDUMP",
-            "${"  ".repeat(depth)}${node.className} " +
-                "id=${node.viewIdResourceName} text=${node.text} " +
-                "desc=${node.contentDescription} sel=${node.isSelected} " +
-                "vis=${node.isVisibleToUser} bounds=$r"
-        )
+        // On n'affiche que les éléments avec un ID lisible (pas "obfuscated"), sans le texte :
+        // dump court, et aucun nom de contact dans les logs.
+        val id = node.viewIdResourceName
+        if (id != null && !id.contains("0_resource_name_obfuscated")) {
+            val r = Rect().also { node.getBoundsInScreen(it) }
+            Log.d(
+                "SNAPDUMP",
+                "${"  ".repeat(depth)}id=$id desc=${node.contentDescription} " +
+                    "vis=${node.isVisibleToUser} bounds=$r"
+            )
+        }
         for (i in 0 until node.childCount) dumpTree(node.getChild(i), depth + 1)
     }
 
