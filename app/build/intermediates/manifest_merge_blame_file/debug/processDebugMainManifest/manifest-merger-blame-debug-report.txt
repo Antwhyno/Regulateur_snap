@@ -18,48 +18,49 @@
 15-->C:\Users\elisa\NSI_Dev\Reg_Snap\app\src\main\AndroidManifest.xml:6:9-43
 16        android:label="Régulateur Snap"
 16-->C:\Users\elisa\NSI_Dev\Reg_Snap\app\src\main\AndroidManifest.xml:7:9-40
-17        android:supportsRtl="true" >
+17        android:supportsRtl="true"
 17-->C:\Users\elisa\NSI_Dev\Reg_Snap\app\src\main\AndroidManifest.xml:9:9-35
-18        <activity
-18-->C:\Users\elisa\NSI_Dev\Reg_Snap\app\src\main\AndroidManifest.xml:11:9-18:20
-19            android:name="com.anti_scroll.blocker.MainActivity"
-19-->C:\Users\elisa\NSI_Dev\Reg_Snap\app\src\main\AndroidManifest.xml:12:13-41
-20            android:exported="true" >
-20-->C:\Users\elisa\NSI_Dev\Reg_Snap\app\src\main\AndroidManifest.xml:13:13-36
-21            <intent-filter>
-21-->C:\Users\elisa\NSI_Dev\Reg_Snap\app\src\main\AndroidManifest.xml:14:13-17:29
-22                <action android:name="android.intent.action.MAIN" />
-22-->C:\Users\elisa\NSI_Dev\Reg_Snap\app\src\main\AndroidManifest.xml:15:17-69
-22-->C:\Users\elisa\NSI_Dev\Reg_Snap\app\src\main\AndroidManifest.xml:15:25-66
-23
-24                <category android:name="android.intent.category.LAUNCHER" />
-24-->C:\Users\elisa\NSI_Dev\Reg_Snap\app\src\main\AndroidManifest.xml:16:17-77
-24-->C:\Users\elisa\NSI_Dev\Reg_Snap\app\src\main\AndroidManifest.xml:16:27-74
-25            </intent-filter>
-26        </activity>
-27
-28        <service
-28-->C:\Users\elisa\NSI_Dev\Reg_Snap\app\src\main\AndroidManifest.xml:20:9-30:19
-29            android:name="com.anti_scroll.blocker.SpotlightBlockerService"
-29-->C:\Users\elisa\NSI_Dev\Reg_Snap\app\src\main\AndroidManifest.xml:21:13-52
-30            android:exported="true"
-30-->C:\Users\elisa\NSI_Dev\Reg_Snap\app\src\main\AndroidManifest.xml:23:13-36
-31            android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE" >
-31-->C:\Users\elisa\NSI_Dev\Reg_Snap\app\src\main\AndroidManifest.xml:22:13-79
-32            <intent-filter>
-32-->C:\Users\elisa\NSI_Dev\Reg_Snap\app\src\main\AndroidManifest.xml:24:13-26:29
-33                <action android:name="android.accessibilityservice.AccessibilityService" />
-33-->C:\Users\elisa\NSI_Dev\Reg_Snap\app\src\main\AndroidManifest.xml:25:17-92
-33-->C:\Users\elisa\NSI_Dev\Reg_Snap\app\src\main\AndroidManifest.xml:25:25-89
-34            </intent-filter>
-35
-36            <meta-data
-36-->C:\Users\elisa\NSI_Dev\Reg_Snap\app\src\main\AndroidManifest.xml:27:13-29:64
-37                android:name="android.accessibilityservice"
-37-->C:\Users\elisa\NSI_Dev\Reg_Snap\app\src\main\AndroidManifest.xml:28:17-60
-38                android:resource="@xml/accessibility_config" />
-38-->C:\Users\elisa\NSI_Dev\Reg_Snap\app\src\main\AndroidManifest.xml:29:17-61
-39        </service>
-40    </application>
-41
-42</manifest>
+18        android:testOnly="true" >
+19        <activity
+19-->C:\Users\elisa\NSI_Dev\Reg_Snap\app\src\main\AndroidManifest.xml:11:9-18:20
+20            android:name="com.anti_scroll.blocker.MainActivity"
+20-->C:\Users\elisa\NSI_Dev\Reg_Snap\app\src\main\AndroidManifest.xml:12:13-41
+21            android:exported="true" >
+21-->C:\Users\elisa\NSI_Dev\Reg_Snap\app\src\main\AndroidManifest.xml:13:13-36
+22            <intent-filter>
+22-->C:\Users\elisa\NSI_Dev\Reg_Snap\app\src\main\AndroidManifest.xml:14:13-17:29
+23                <action android:name="android.intent.action.MAIN" />
+23-->C:\Users\elisa\NSI_Dev\Reg_Snap\app\src\main\AndroidManifest.xml:15:17-69
+23-->C:\Users\elisa\NSI_Dev\Reg_Snap\app\src\main\AndroidManifest.xml:15:25-66
+24
+25                <category android:name="android.intent.category.LAUNCHER" />
+25-->C:\Users\elisa\NSI_Dev\Reg_Snap\app\src\main\AndroidManifest.xml:16:17-77
+25-->C:\Users\elisa\NSI_Dev\Reg_Snap\app\src\main\AndroidManifest.xml:16:27-74
+26            </intent-filter>
+27        </activity>
+28
+29        <service
+29-->C:\Users\elisa\NSI_Dev\Reg_Snap\app\src\main\AndroidManifest.xml:20:9-30:19
+30            android:name="com.anti_scroll.blocker.SpotlightBlockerService"
+30-->C:\Users\elisa\NSI_Dev\Reg_Snap\app\src\main\AndroidManifest.xml:21:13-52
+31            android:exported="true"
+31-->C:\Users\elisa\NSI_Dev\Reg_Snap\app\src\main\AndroidManifest.xml:23:13-36
+32            android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE" >
+32-->C:\Users\elisa\NSI_Dev\Reg_Snap\app\src\main\AndroidManifest.xml:22:13-79
+33            <intent-filter>
+33-->C:\Users\elisa\NSI_Dev\Reg_Snap\app\src\main\AndroidManifest.xml:24:13-26:29
+34                <action android:name="android.accessibilityservice.AccessibilityService" />
+34-->C:\Users\elisa\NSI_Dev\Reg_Snap\app\src\main\AndroidManifest.xml:25:17-92
+34-->C:\Users\elisa\NSI_Dev\Reg_Snap\app\src\main\AndroidManifest.xml:25:25-89
+35            </intent-filter>
+36
+37            <meta-data
+37-->C:\Users\elisa\NSI_Dev\Reg_Snap\app\src\main\AndroidManifest.xml:27:13-29:64
+38                android:name="android.accessibilityservice"
+38-->C:\Users\elisa\NSI_Dev\Reg_Snap\app\src\main\AndroidManifest.xml:28:17-60
+39                android:resource="@xml/accessibility_config" />
+39-->C:\Users\elisa\NSI_Dev\Reg_Snap\app\src\main\AndroidManifest.xml:29:17-61
+40        </service>
+41    </application>
+42
+43</manifest>
