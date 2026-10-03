@@ -17,7 +17,7 @@ class SpotlightBlockerService : AccessibilityService() {
 
         // Passe à true pour relever les IDs/descriptions dans Logcat (filtre SNAPDUMP),
         // puis remets à false une fois detectCurrentTab() complété.
-        private const val DEBUG_DUMP = false
+        private const val DEBUG_DUMP = true
     }
 
     private var lastBlock = 0L
