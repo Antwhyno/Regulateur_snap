@@ -17,18 +17,26 @@ class SpotlightBlockerService : AccessibilityService() {
 
         // Passe à true pour relever les IDs/descriptions dans Logcat (filtre SNAPDUMP),
         // puis remets à false une fois detectCurrentTab() complété.
-        private const val DEBUG_DUMP = true
+        private const val DEBUG_DUMP = false
     }
 
     private var lastBlock = 0L
+    private var lastDump = 0L
 
     override fun onAccessibilityEvent(event: AccessibilityEvent) {
         if (event.packageName?.toString() != SNAP_PACKAGE) return
 
         val root = rootInActiveWindow ?: return
 
-        if (DEBUG_DUMP && event.eventType == AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED) {
-            dumpTree(root)
+        if (DEBUG_DUMP) {
+            val t = System.currentTimeMillis()
+            val isTabChange = event.eventType == AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED ||
+                event.eventType == AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED
+            if (isTabChange && t - lastDump > 700) {
+                lastDump = t
+                Log.d("SNAPDUMP", "===== NOUVEAU DUMP =====")
+                dumpTree(root)
+            }
         }
 
         // Anti-spam : pas de nouveau blocage pendant 1,5 s
