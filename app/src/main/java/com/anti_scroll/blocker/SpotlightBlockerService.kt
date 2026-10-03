@@ -1,4 +1,4 @@
-ackage com.anti_scroll.blocker
+package com.anti_scroll.blocker
 
 import android.accessibilityservice.AccessibilityService
 import android.graphics.Rect
@@ -110,17 +110,24 @@ class SpotlightBlockerService : AccessibilityService() {
     // ---------------------------------------------------------------
 
     private fun dumpTree(node: AccessibilityNodeInfo?, depth: Int = 0) {
-        if (node == null) return
-        val r = Rect().also { node.getBoundsInScreen(it) }
+    if (node == null) return
+    val r = Rect().also { node.getBoundsInScreen(it) }
+    val screenHeight = resources.displayMetrics.heightPixels
+    val inTopZone = r.top < screenHeight * 0.12
+    val inBottomZone = r.top > screenHeight * 0.85
+
+    if (inTopZone || inBottomZone) {
         Log.d(
             "SNAPDUMP",
             "${"  ".repeat(depth)}${node.className} " +
                 "id=${node.viewIdResourceName} text=${node.text} " +
                 "desc=${node.contentDescription} sel=${node.isSelected} " +
+                "chk=${node.isChecked} state=${node.stateDescription} " +
                 "vis=${node.isVisibleToUser} bounds=$r"
         )
-        for (i in 0 until node.childCount) dumpTree(node.getChild(i), depth + 1)
     }
+    for (i in 0 until node.childCount) dumpTree(node.getChild(i), depth + 1)
+}
 
     // ---------------------------------------------------------------
     // DÉTECTIONS PAR TEXTE (sécurité photo + fallback)
