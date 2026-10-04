@@ -14,7 +14,8 @@
         android:extractNativeLibs="false"
         android:icon="@mipmap/ic_launcher"
         android:label="Régulateur Snap"
-        android:supportsRtl="true" >
+        android:supportsRtl="true"
+        android:testOnly="true" >
         <activity
             android:name="com.anti_scroll.blocker.MainActivity"
             android:exported="true" >
