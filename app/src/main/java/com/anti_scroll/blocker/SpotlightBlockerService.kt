@@ -6,22 +6,50 @@ import android.util.Log
 import android.view.accessibility.AccessibilityEvent
 import android.view.accessibility.AccessibilityNodeInfo
 import android.widget.Toast
+import kotlin.math.abs
 
 class SpotlightBlockerService : AccessibilityService() {
 
-    enum class SnapTab { CAMERA, CHAT, STORIES, SPOTLIGHT, UNKNOWN }
+    enum class SnapTab { CAMERA, CHAT, STORIES, OTHER }
 
     companion object {
         private const val SNAP_PACKAGE = "com.snapchat.android"
-        private const val BLOCK_COOLDOWN_MS = 1500L
 
-        // Passe à true pour relever les IDs/descriptions dans Logcat (filtre SNAPDUMP),
-        // puis remets à false une fois detectCurrentTab() complété.
-        private const val DEBUG_DUMP = true
+        private const val BLOCK_COOLDOWN_MS = 1500L      // pas deux blocages à moins de 1,5 s
+        private const val REPEAT_WINDOW_MS = 4000L       // 2e blocage dans les 4 s => on utilise "Retour"
+        private const val STORIES_ENTRY_GRACE_MS = 900L  // on ignore le scroll juste après l'arrivée sur Stories
+
+        // true  : le scroll est aussi bloqué quand une story est ouverte en plein écran
+        // false : seul le scroll de la grille Stories est bloqué
+        private const val BLOCK_IN_STORY_VIEWER = true
+
+        // Passe à true pour relever les IDs dans Logcat (filtre SNAPDUMP), puis remets à false.
+        private const val DEBUG_DUMP = false
+
+        // IDs relevés dans les dumps SNAPDUMP
+        private const val ID_NAV_CAMERA = "$SNAP_PACKAGE:id/ngs_camera_icon_container" // barre du bas
+        private const val ID_CAMERA_PAGE = "$SNAP_PACKAGE:id/camera_page"             // page Caméra
+        private const val ID_CHAT_ITEM = "$SNAP_PACKAGE:id/ff_item"                    // lignes du Chat
+        private const val ID_STORY_CARD = "$SNAP_PACKAGE:id/df_large_story"            // cartes "Découvrir"
+        private const val ID_FRIEND_CARD = "$SNAP_PACKAGE:id/friend_card_frame"        // cercles d'amis
+        private const val ID_VIEWER = "$SNAP_PACKAGE:id/opera_viewer"                  // story en plein écran
+
+        private val WATCHED_IDS = setOf(
+            ID_NAV_CAMERA, ID_CAMERA_PAGE, ID_CHAT_ITEM, ID_STORY_CARD, ID_FRIEND_CARD, ID_VIEWER
+        )
     }
 
     private var lastBlock = 0L
     private var lastDump = 0L
+    private var storiesEnteredAt = 0L
+
+    /** Résultat d'un unique parcours de l'arbre d'accessibilité. */
+    private class Scan {
+        val ids = mutableSetOf<String>()
+        var navCamera: AccessibilityNodeInfo? = null // bouton Caméra de la barre du bas
+        var spotlightHeader = false                  // titre centré "Spotlight" en haut
+        var photoPreview = false                     // écran d'envoi d'un snap
+    }
 
     override fun onAccessibilityEvent(event: AccessibilityEvent) {
         if (event.packageName?.toString() != SNAP_PACKAGE) return
@@ -39,109 +67,123 @@ class SpotlightBlockerService : AccessibilityService() {
             }
         }
 
-        // Anti-spam : pas de nouveau blocage pendant 1,5 s
+        // Anti-spam
         val now = System.currentTimeMillis()
         if (now - lastBlock < BLOCK_COOLDOWN_MS) return
 
-        // 🛡️ SÉCURITÉ PHOTO : écran d'envoi => on ne bloque rien
-        if (isPhotoPreviewActive(root)) return
+        // Un seul parcours de l'arbre pour tout relever
+        val metrics = resources.displayMetrics
+        val scan = Scan()
+        scanTree(root, scan, metrics.widthPixels, metrics.heightPixels)
 
-        val screenHeight = resources.displayMetrics.heightPixels
-        val tab = detectCurrentTab(root, screenHeight)
+        // 🛡️ SÉCURITÉ PHOTO : écran d'envoi => on ne bloque rien
+        if (scan.photoPreview) return
+
+        // Pas de barre du bas = conversation, snap ouvert, etc. => on ne bloque rien
+        val navCamera = scan.navCamera ?: return
+
+        val tab = detectCurrentTab(scan.ids)
+
+        // Mémorise le moment d'arrivée sur l'onglet Stories
+        if (tab == SnapTab.STORIES) {
+            if (storiesEnteredAt == 0L) storiesEnteredAt = now
+        } else {
+            storiesEnteredAt = 0L
+        }
 
         // 1. BLOCAGE DE SPOTLIGHT
-        val onSpotlight = if (tab == SnapTab.UNKNOWN) {
-            // Fallback tant que les signatures d'onglets ne sont pas complétées.
-            // Uniquement sur un écran principal (barre du bas présente), jamais dans une conversation.
-            isMainScreen(root) && isSpotlightTopTitleVisible(root, screenHeight)
-        } else {
-            tab == SnapTab.SPOTLIGHT
-        }
-        if (onSpotlight) {
-            block("Spotlight bloqué ! Retour au travail ❌", now)
+        if (scan.spotlightHeader) {
+            block("Spotlight bloqué ! Retour au travail ❌", now, navCamera)
             return
         }
 
         // 2. BLOCAGE DU SCROLL DANS LES STORIES
-        if (event.eventType == AccessibilityEvent.TYPE_VIEW_SCROLLED) {
-            val onStories = if (tab == SnapTab.UNKNOWN) {
-                isMainScreen(root) && isStoriesScreenActive(root)
-            } else {
-                tab == SnapTab.STORIES
-            }
-            if (onStories) {
-                block("Pas de scroll dans les Stories ! 🛑", now)
-            }
+        if (event.eventType == AccessibilityEvent.TYPE_VIEW_SCROLLED &&
+            tab == SnapTab.STORIES &&
+            now - storiesEnteredAt > STORIES_ENTRY_GRACE_MS &&
+            (BLOCK_IN_STORY_VIEWER || ID_VIEWER !in scan.ids)
+        ) {
+            block("Pas de scroll dans les Stories ! 🛑", now, navCamera)
         }
     }
 
-    private fun block(message: String, now: Long) {
+    // ---------------------------------------------------------------
+    // ACTION DE BLOCAGE : retour à la Caméra (sinon "Retour")
+    // ---------------------------------------------------------------
+
+    private fun block(message: String, now: Long, navCamera: AccessibilityNodeInfo) {
+        val isRepeat = now - lastBlock < REPEAT_WINDOW_MS
         lastBlock = now
         Toast.makeText(applicationContext, message, Toast.LENGTH_SHORT).show()
-        performGlobalAction(GLOBAL_ACTION_BACK)
-    }
 
-    // ---------------------------------------------------------------
-    // DÉTECTION DE L'ONGLET (barre de navigation du bas)
-    // ---------------------------------------------------------------
-
-    private fun detectCurrentTab(root: AccessibilityNodeInfo, screenHeight: Int): SnapTab {
-        val selected = findSelectedBottomNode(root, screenHeight) ?: return SnapTab.UNKNOWN
-        val id = selected.viewIdResourceName.orEmpty().lowercase()
-        val desc = selected.contentDescription?.toString().orEmpty().lowercase()
-
-        // ⚠️ À ADAPTER avec ce que tu as relevé dans le dump SNAPDUMP
-        return when {
-            id.contains("spotlight") || desc.contains("spotlight") -> SnapTab.SPOTLIGHT
-            id.contains("stories") || desc.contains("stories") || desc.contains("découvrir") -> SnapTab.STORIES
-            id.contains("chat") || desc.contains("chat") -> SnapTab.CHAT
-            id.contains("camera") || desc.contains("caméra") || desc.contains("camera") -> SnapTab.CAMERA
-            else -> SnapTab.UNKNOWN
+        // Premier essai : clic sur l'onglet Caméra. Si ça échoue ou se répète : Retour.
+        if (isRepeat || !clickNode(navCamera)) {
+            performGlobalAction(GLOBAL_ACTION_BACK)
         }
     }
 
-    private fun findSelectedBottomNode(node: AccessibilityNodeInfo?, screenHeight: Int): AccessibilityNodeInfo? {
-        if (node == null) return null
-
-        if (node.isSelected) {
-            val r = Rect().also { node.getBoundsInScreen(it) }
-            if (r.top > screenHeight * 0.85) return node // zone de la barre du bas
-        }
-
-        for (i in 0 until node.childCount) {
-            findSelectedBottomNode(node.getChild(i), screenHeight)?.let { return it }
-        }
-        return null
-    }
-
-    // ---------------------------------------------------------------
-    // ÉCRAN PRINCIPAL = la barre de navigation du bas est affichée
-    // (absente dans une conversation, un snap ouvert, etc.)
-    // ---------------------------------------------------------------
-
-    private fun isMainScreen(node: AccessibilityNodeInfo?): Boolean {
-        if (node == null) return false
-
-        if (node.viewIdResourceName == "com.snapchat.android:id/ngs_camera_icon_container" &&
-            node.isVisibleToUser
-        ) {
-            return true
-        }
-
-        for (i in 0 until node.childCount) {
-            if (isMainScreen(node.getChild(i))) return true
+    private fun clickNode(node: AccessibilityNodeInfo): Boolean {
+        var current: AccessibilityNodeInfo? = node
+        var depth = 0
+        while (current != null && depth < 4) {
+            if (current.performAction(AccessibilityNodeInfo.ACTION_CLICK)) return true
+            current = current.parent
+            depth++
         }
         return false
     }
 
     // ---------------------------------------------------------------
-    // OUTIL DE DUMP (debug)
+    // PARCOURS UNIQUE DE L'ARBRE
+    // (Snapchat n'expose jamais "selected" sur la barre du bas :
+    //  on reconnaît la page affichée par ses éléments)
+    // ---------------------------------------------------------------
+
+    private fun scanTree(node: AccessibilityNodeInfo?, out: Scan, width: Int, height: Int) {
+        if (node == null) return
+
+        if (node.isVisibleToUser) {
+            val id = node.viewIdResourceName
+            if (id != null && id in WATCHED_IDS) {
+                out.ids.add(id)
+                if (id == ID_NAV_CAMERA) out.navCamera = node
+            }
+
+            val text = node.text?.toString()?.trim().orEmpty()
+            if (text.isNotEmpty()) {
+                if (text.contains("Envoyer à", ignoreCase = true) ||
+                    text.contains("Send To", ignoreCase = true)
+                ) {
+                    out.photoPreview = true
+                }
+
+                // Titre "Spotlight" : en haut de l'écran ET centré horizontalement.
+                // (le sous-titre d'une story est à gauche, le bouton de la barre du bas est en bas)
+                if (text.equals("Spotlight", ignoreCase = true)) {
+                    val r = Rect().also { node.getBoundsInScreen(it) }
+                    val isTop = r.top < height * 0.12
+                    val isCentered = abs(r.centerX() - width / 2) < width * 0.10
+                    if (isTop && isCentered) out.spotlightHeader = true
+                }
+            }
+        }
+
+        for (i in 0 until node.childCount) scanTree(node.getChild(i), out, width, height)
+    }
+
+    private fun detectCurrentTab(ids: Set<String>): SnapTab = when {
+        ID_CAMERA_PAGE in ids -> SnapTab.CAMERA
+        ID_CHAT_ITEM in ids -> SnapTab.CHAT
+        ID_STORY_CARD in ids || ID_FRIEND_CARD in ids -> SnapTab.STORIES
+        else -> SnapTab.OTHER
+    }
+
+    // ---------------------------------------------------------------
+    // OUTIL DE DUMP (debug) : IDs lisibles uniquement, sans texte
     // ---------------------------------------------------------------
 
     private fun dumpTree(node: AccessibilityNodeInfo?, depth: Int = 0) {
         if (node == null) return
-        // On n'affiche que les éléments avec un ID lisible (pas "obfuscated"), sans le texte :
-        // dump court, et aucun nom de contact dans les logs.
         val id = node.viewIdResourceName
         if (id != null && !id.contains("0_resource_name_obfuscated")) {
             val r = Rect().also { node.getBoundsInScreen(it) }
@@ -152,63 +194,6 @@ class SpotlightBlockerService : AccessibilityService() {
             )
         }
         for (i in 0 until node.childCount) dumpTree(node.getChild(i), depth + 1)
-    }
-
-    // ---------------------------------------------------------------
-    // DÉTECTIONS PAR TEXTE (sécurité photo + fallback)
-    // ---------------------------------------------------------------
-
-    private fun isPhotoPreviewActive(node: AccessibilityNodeInfo?): Boolean {
-        if (node == null) return false
-
-        if (node.isVisibleToUser) {
-            val text = node.text?.toString() ?: ""
-            if (text.contains("Envoyer à", ignoreCase = true) || text.contains("Send To", ignoreCase = true)) {
-                return true
-            }
-        }
-
-        for (i in 0 until node.childCount) {
-            if (isPhotoPreviewActive(node.getChild(i))) return true
-        }
-        return false
-    }
-
-    private fun isSpotlightTopTitleVisible(node: AccessibilityNodeInfo?, screenHeight: Int): Boolean {
-        if (node == null) return false
-
-        if (node.isVisibleToUser) {
-            val text = node.text?.toString()?.trim()?.lowercase() ?: ""
-            val desc = node.contentDescription?.toString()?.trim()?.lowercase() ?: ""
-
-            // Correspondance EXACTE : un message contenant le mot "spotlight" ne déclenche plus rien
-            if (text == "spotlight" || desc == "spotlight") {
-                val rect = Rect()
-                node.getBoundsInScreen(rect)
-                if (rect.top < screenHeight / 2) return true
-            }
-        }
-
-        for (i in 0 until node.childCount) {
-            if (isSpotlightTopTitleVisible(node.getChild(i), screenHeight)) return true
-        }
-        return false
-    }
-
-    private fun isStoriesScreenActive(node: AccessibilityNodeInfo?): Boolean {
-        if (node == null) return false
-
-        if (node.isVisibleToUser) {
-            val text = node.text?.toString() ?: ""
-            if (text.contains("Découvrir", ignoreCase = true) || text.contains("Comptes suivis", ignoreCase = true)) {
-                return true
-            }
-        }
-
-        for (i in 0 until node.childCount) {
-            if (isStoriesScreenActive(node.getChild(i))) return true
-        }
-        return false
     }
 
     override fun onInterrupt() {}
